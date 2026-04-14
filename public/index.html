@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat com IA - Agente AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Agente AI</h1>
+            <p>Pergunte qualquer coisa para nossa IA sarcástica!</p>
+        </header>
+        
+        <div id="chat-container" class="chat-container">
+            <div class="welcome-message">
+                <p>Olá! Digite sua pergunta abaixo e eu responderei com todo o meu sarcasmo. 😏</p>
+            </div>
+        </div>
+        
+        <form id="chat-form" class="input-form">
+            <input type="text" id="user-input" placeholder="Digite sua pergunta aqui..." required>
+            <button type="submit">Enviar</button>
+        </form>
+        
+        <div class="status" id="status">Conectado</div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const status = document.getElementById('status');
+
+        // Lugar para conexão MongoDB: chats salvos/retrieve aqui futuramente
+        // Exemplo: const MONGODB_URI = 'mongodb://localhost:27017/agenteai';
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pergunta = userInput.value.trim();
+            if (!pergunta) return;
+
+            // Add user message
+            addMessage('Você', pergunta, 'user');
+            userInput.value = '';
+            status.textContent = 'Pensando...';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pergunta })
+                });
+
+                const data = await response.json();
+
+                if (data.sucesso) {
+                    addMessage('IA', data.resposta, 'ai');
+                    status.textContent = 'Conectado';
+                    // Futuro: save to MongoDB via /api/save-chat
+                } else {
+                    addMessage('Erro', data.erro || 'Erro desconhecido', 'error');
+                    status.textContent = 'Erro na conexão';
+                }
+            } catch (error) {
+                addMessage('Erro', 'Falha na conexão com o servidor.', 'error');
+                status.textContent = 'Desconectado';
+                console.error(error);
+            }
+        });
+
+        function addMessage(author, text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `
+                <div class="author">${author}</div>
+                <div class="content">${text.replace(/\n/g, '<br>')}</div>
+            `;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            if (type !== 'welcome') {
+                const welcome = document.querySelector('.welcome-message');
+                if (welcome) welcome.remove();
+            }
+        }
+    </script>
+</body>
+</html>

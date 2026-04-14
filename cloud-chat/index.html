@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Agente AI - Nuvem</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .chat-container { background: white; width: 90%; max-width: 500px; height: 80vh; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+        header { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; text-align: center; }
+        header h1 { font-size: 1.5em; }
+        .historico { flex: 1; padding: 20px; overflow-y: auto; background: #f8f9fa; }
+        .mensagem { margin-bottom: 15px; animation: fadeIn 0.3s; }
+        .user { text-align: right; }
+        .user .content { background: #4facfe; color: white; display: inline-block; padding: 12px 18px; border-radius: 18px 18px 5px 18px; max-width: 80%; }
+        .bot .content { background: white; border: 1px solid #e9ecef; color: #333; display: inline-block; padding: 12px 18px; border-radius: 18px 18px 18px 5px; max-width: 80%; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .loading { opacity: 0.7; font-style: italic; }
+        .input-area { padding: 20px; background: #f8f9fa; border-top: 1px solid #e9ecef; }
+        input { width: 100%; padding: 15px; border: 2px solid #e9ecef; border-radius: 25px; font-size: 16px; outline: none; transition: border-color 0.3s; }
+        input:focus { border-color: #4facfe; }
+        button { position: absolute; right: 20px; top: 25px; width: 50px; height: 50px; background: #4facfe; color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 18px; transition: transform 0.2s; }
+        button:hover { transform: scale(1.1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .status { text-align: center; padding: 10px; font-size: 0.9em; color: #28a745; background: #d4edda; border-top: 1px solid #c3e6cb; }
+        @media (max-width: 600px) { .chat-container { width: 95%; height: 95vh; } }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <header>
+            <h1>🤖 Agente AI Nuvem</h1>
+            <p>Chat com IA sarcástica!</p>
+        </header>
+        <div class="historico" id="historico">
+            <div class="mensagem bot">
+                <div class="content">Olá! Cole sua URL Render em URL_BACKEND e teste o chat. 😏</div>
+            </div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="pergunta" placeholder="Digite sua pergunta...">
+            <button onclick="enviarMensagem()">➤</button>
+        </div>
+        <div class="status" id="status">Status: Configurar URL_BACKEND</div>
+    </div>
+    <script>
+        // SUBSTITUA pela URL do seu Render: https://your-app.onrender.com/api/chat
+        const URL_BACKEND = 'https://SEU-RENDER-APP.onrender.com/api/chat';
+
+        const historico = document.getElementById('historico');
+        const input = document.getElementById('pergunta');
+        const status = document.getElementById('status');
+
+        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') enviarMensagem(); });
+
+        async function enviarMensagem() {
+            const texto = input.value.trim();
+            if (!texto || URL_BACKEND.includes('SEU-RENDER-APP')) {
+                alert('Configure URL_BACKEND com sua URL Render!');
+                return;
+            }
+
+            // User msg
+            historico.innerHTML += `
+                <div class="mensagem user">
+                    <div class="content">${texto}</div>
+                </div>
+            `;
+            input.value = '';
+            const loadingId = 'loading' + Date.now();
+            historico.innerHTML += `
+                <div class="mensagem bot">
+                    <div class="content loading" id="${loadingId}">Pensando... ⏳</div>
+                </div>
+            `;
+            historico.scrollTop = historico.scrollHeight;
+            status.textContent = 'Enviando...';
+
+            try {
+                const res = await fetch(URL_BACKEND, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pergunta: texto })
+                });
+                const data = await res.json();
+
+                document.getElementById(loadingId).remove();
+                if (data.sucesso) {
+                    historico.innerHTML += `
+                        <div class="mensagem bot">
+                            <div class="content">${data.resposta}</div>
+                        </div>
+                    `;
+                    status.textContent = 'Conectado à nuvem!';
+                } else {
+                    throw new Error(data.erro);
+                }
+            } catch (err) {
+                document.getElementById(loadingId).innerHTML = `Erro: ${err.message} ❌`;
+                status.textContent = 'Erro de conexão';
+            }
+            historico.scrollTop = historico.scrollHeight;
+        }
+    </script>
+</body>
+</html>
