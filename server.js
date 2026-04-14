@@ -40,7 +40,7 @@ app.post('/api/chat', async (req, res) => {
         console.log(`📩 Processando pergunta: "${pergunta}"`);
 
         // Chama o modelo da IA (Se der erro 404, mude para "gemini-pro")
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
         
         const promptFinal = `Você é um robô sarcástico. Responda a seguinte pergunta: ${pergunta}`;
         
